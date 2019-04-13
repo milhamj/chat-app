@@ -68,15 +68,22 @@ app.get(ROOT_PATH + '/messages/:page', (req, res) => {
 })
 
 app.post(ROOT_PATH + '/messages', (req, res) => {
-	console.log("POST: ", req.body)
-	var message = new Message(req.body);
-	message.save((err) =>{
-		if(err) {
-			sendStatus(500);
-		}
-		io.emit('message', req.body);
-		res.sendStatus(200);
-	})
+	console.log("POST: req", req.body)
+	if (req.body.name.trim() && req.body.message.trim()) {
+		console.log("POST: saving", req.body)
+		var message = new Message(req.body);
+		message.save((err) =>{
+			if(err) {
+				console.log("POST: error", req.body)
+				sendStatus(500);
+			}
+			console.log("POST: success", req.body)
+			io.emit('message', req.body);
+			res.sendStatus(200);
+		})
+	} else {
+		sendStatus(500);
+	}
 })
 
 io.on("connection", () =>{
