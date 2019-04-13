@@ -103,7 +103,7 @@
 		function addMessages(message){
 			$("#messages").append(`
 				<tr>
-				<th>${message.name}</th>
+				<th class="col-md-3">${message.name}</th>
 				<th>${message.message}</th>
 				</tr>
 				`)
@@ -112,7 +112,7 @@
 		function addNewMessages(message){
 			$("#messages").prepend(`
 				<tr>
-				<th>${message.name}</th>
+				<th class="col-md-3">${message.name}</th>
 				<th>${message.message}</th>
 				</tr>
 				`)
