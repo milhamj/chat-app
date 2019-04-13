@@ -69,6 +69,7 @@
 	<script>
 		let ROOT_PATH = '/chat'
 		var current_page = 0
+		var isSending = false
 
 		$(() => {
 			$("#send").click(()=>{
@@ -85,8 +86,19 @@
 				console.log(current_page)
 				getMessages(current_page);
 			});
+			loadNameFromLocal()
 			getMessages(current_page)
 		})
+
+		function loadNameFromLocal() {
+			let nameVal = localStorage.getItem("nameVal");
+			$("#inputName").val(nameVal)
+		}
+
+		function saveNameToLocal() {
+			let nameVal = $("#inputName").val()
+			localStorage.setItem("nameVal", nameVal)
+		}
 
 		function addMessages(message){
 			$("#messages").append(`
@@ -120,7 +132,9 @@
 		function sendMessage(){
 			var nameVal = $("#inputName").val()
 			var messageVal = $("#inputMessage").val()
-			if (nameVal.trim() && messageVal.trim()) {
+			if (nameVal.trim() && messageVal.trim() && !isSending) {
+				isSending = true
+				saveNameToLocal()
 				const message = {
 					name: nameVal, 
 					message: messageVal
@@ -128,8 +142,10 @@
 				$.post(ROOT_PATH + "/messages", message, function(data) {
 					console.log(data)
 					$("#inputMessage").val("")
+					isSending = false
 				}).fail(function(err) {
 					console.log(err)
+					isSending = false
 				})
 			}
 		}
