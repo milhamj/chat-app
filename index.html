@@ -50,6 +50,11 @@
 			<tbody id="messages">
 			</tbody>
 		</table>
+		<div class="row">
+			<div class="col-md-6">
+				<a id="load-more" style="display: none;"><h5 class="text-primary">Load More...</h5></a>
+			</div>
+		</div>
 	</div>
 
 	<!-- jQuery -->
@@ -62,28 +67,37 @@
 	<script src="/socket.io/socket.io.js"></script>
 
 	<script>
+		let ROOT_PATH = '/chat'
+		var current_page = 0
+
 		$(() => {
 			$("#send").click(()=>{
-				sendMessage({
-					name: $("#inputName").val(), 
-					message: $("#inputMessage").val()
-				});
-				$("#inputMessage").val("")
+				sendMessage();
 			})
 			$('#inputMessage').keypress(function(event){
 				var keycode = (event.keyCode ? event.keyCode : event.which);
 				if(keycode == '13'){
-					sendMessage({
-						name: $("#inputName").val(), 
-						message: $("#inputMessage").val()
-					});
-					$("#inputMessage").val("")
+					sendMessage();
 				}
 			});
-			getMessages()
+			$("#load-more").click(()=>{
+				current_page++;
+				console.log(current_page)
+				getMessages(current_page);
+			});
+			getMessages(current_page)
 		})
 
 		function addMessages(message){
+			$("#messages").append(`
+				<tr>
+				<th>${message.name}</th>
+				<th>${message.message}</th>
+				</tr>
+				`)
+		}
+
+		function addNewMessages(message){
 			$("#messages").prepend(`
 				<tr>
 				<th>${message.name}</th>
@@ -92,18 +106,32 @@
 				`)
 		}
 
-		function getMessages(){
-			$.get("/messages", (data) => {
+		function getMessages(page){
+			$.get(ROOT_PATH + "/messages/" + page, (data) => {
 				data.messages.forEach(addMessages);
+				if (data.has_next_page) {
+					$("#load-more").show()
+				} else {
+					$("#load-more").hide()
+				}
 			})
 		}
 
-		function sendMessage(message){
-			$.post("/messages", message)
+		function sendMessage(){
+			const message = {
+				name: $("#inputName").val(), 
+				message: $("#inputMessage").val()
+			}
+			$.post(ROOT_PATH + "/messages", message, function(data) {
+				console.log(data)
+				$("#inputMessage").val("")
+			}).fail(function(err) {
+				console.log(err)
+			})
 		}
 
 		var socket = io();
-		socket.on("message", addMessages)
+		socket.on("message", addNewMessages)
 	</script>
 </body>
 </html>

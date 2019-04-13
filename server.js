@@ -13,7 +13,8 @@ const LIMIT = 10
 
 const Message = mongoose.model("Message", {
 	name : String, 
-	message : String
+	message : String,
+	created_at : { type: Date, required: true, default: Date.now }
 })
 
 mongoose.connect(CONSTANT.dbUrl, (err) => { 
@@ -27,7 +28,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}))
 
 app.get(/^(?!(\/chat))/i, function(req, res) {
-	res.redirect(ROOT_PATH + req.originalUrl);
+	res.redirect(307, ROOT_PATH + req.originalUrl);
+});
+
+app.post(/^(?!(\/chat))/i, function(req, res) {
+	res.redirect(307, ROOT_PATH + req.originalUrl);
 });
 
 app.get(ROOT_PATH, function(req, res){
@@ -40,14 +45,23 @@ app.get(ROOT_PATH + '/messages', (req, res) => {
 
 app.get(ROOT_PATH + '/messages/:page', (req, res) => {
 	Message.find()
+	.sort('-created_at')
 	.limit(LIMIT)
 	.skip(LIMIT * req.params.page)
 	.exec(function(err, messages) {
+		if (err) {
+			console.log("ERROR: ", err)
+		}
+		let resultMessages = messages
 		Message.find()
+		.sort('-created_at')
 		.limit(LIMIT)
 		.skip(LIMIT * req.params.page + 1)
 		.exec(function(err, messages) {
-			let response = { "has_next_page": false, "messages": messages }
+			if (err) {
+				console.log("ERROR: ", err)
+			}
+			let response = { "has_next_page": !isEmpty(messages), "messages": resultMessages }
 			res.send(response);
 		})
 	})
@@ -72,3 +86,7 @@ io.on("connection", () =>{
 const server = http.listen(PORT, () => {
 	console.log('server is running on port', server.address().port);
 });
+
+function isEmpty(array) {
+	return !Array.isArray(array) || !array.length;
+}
